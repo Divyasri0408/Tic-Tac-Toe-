@@ -13,8 +13,6 @@ A modern Tic Tac Toe game built using HTML, CSS, and JavaScript.
 - HTML
 - CSS
 - JavaScript
-
-## 📸 Preview
-
-
+- 
 ## 🌐 Live Demo
+ https://divyasri0408.github.io/Tic-Tac-Toe/
