@@ -19,7 +19,9 @@ function createBoard() {
   for (let i = 0; i < 9; i++) {
     const cell = document.createElement("div");
     cell.classList.add("cell");
+
     cell.addEventListener("click", () => handleMove(i));
+
     board.appendChild(cell);
     cells.push(cell);
   }
@@ -32,25 +34,29 @@ function handleMove(index) {
 
   cells[index].textContent = currentPlayer;
 
-  if (checkWin()) return;
+  if (checkGameOver()) return;
 
   currentPlayer = currentPlayer === "X" ? "O" : "X";
   statusText.textContent = `Player ${currentPlayer}'s Turn`;
 
-  if (mode === "ai" && currentPlayer === "O") {
+  if (mode === "ai" && currentPlayer === "O" && gameActive) {
     setTimeout(aiMove, 500);
   }
 }
 
 function aiMove() {
-  let empty = cells.map((c, i) => c.textContent === "" ? i : null).filter(v => v !== null);
-  let move = empty[Math.floor(Math.random() * empty.length)];
+  let emptyCells = cells
+    .map((cell, i) => cell.textContent === "" ? i : null)
+    .filter(i => i !== null);
+
+  let move = emptyCells[Math.floor(Math.random() * emptyCells.length)];
   handleMove(move);
 }
 
-function checkWin() {
+function checkGameOver() {
   for (let pattern of winPatterns) {
     const [a, b, c] = pattern;
+
     if (
       cells[a].textContent &&
       cells[a].textContent === cells[b].textContent &&
@@ -60,14 +66,14 @@ function checkWin() {
       cells[b].classList.add("win");
       cells[c].classList.add("win");
 
-      statusText.textContent = `🎉 Player ${currentPlayer} Wins!`;
+      statusText.textContent = `🎉 Game Over! Player ${currentPlayer} Wins!`;
       gameActive = false;
       return true;
     }
   }
 
   if (cells.every(cell => cell.textContent !== "")) {
-    statusText.textContent = "It's a Draw!";
+    statusText.textContent = "🤝 Game Over! It's a Draw!";
     gameActive = false;
     return true;
   }
@@ -83,7 +89,20 @@ function restartGame() {
 
 function setMode(selectedMode) {
   mode = selectedMode;
+
+  document.getElementById("pvpBtn").classList.remove("active");
+  document.getElementById("aiBtn").classList.remove("active");
+
+  if (mode === "pvp") {
+    document.getElementById("pvpBtn").classList.add("active");
+    statusText.textContent = "2 Player Mode Selected";
+  } else {
+    document.getElementById("aiBtn").classList.add("active");
+    statusText.textContent = "AI Mode Selected 🤖";
+  }
+
   restartGame();
 }
 
-createBoard();
+// Default mode
+setMode("pvp");
