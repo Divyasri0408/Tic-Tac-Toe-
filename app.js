@@ -1,92 +1,89 @@
-let boxes = document.querySelectorAll(".box");
-let resetBtn = document.querySelector("#reset-btn");
-let newGameBtn = document.querySelector("#new-btn");
-let msgContainer = document.querySelector(".msg-container");
-let msg = document.querySelector("#msg");
+const board = document.getElementById("board");
+const statusText = document.getElementById("status");
 
-let turnO =true;//playerX, playerO
-let count = 0;
+let cells = [];
+let currentPlayer = "X";
+let gameActive = true;
+let mode = "pvp";
 
-const winPatterns= [
-    [0, 1, 2],
-    [0, 3, 6],
-    [0, 4, 8],
-    [1, 4, 7],
-    [2, 5, 8],
-    [2, 4, 6],
-    [3, 4, 5],
-    [6, 7, 8]
+const winPatterns = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
 ];
 
-const resetGame = () => {
-    turnO = true;
-    count = 0;
-    enableBoxes();
-    msgContainer.classList.add("hide");
-};
+function createBoard() {
+  board.innerHTML = "";
+  cells = [];
 
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+    cell.addEventListener("click", () => handleMove(i));
+    board.appendChild(cell);
+    cells.push(cell);
+  }
 
-boxes.forEach((box) => {
-    box.addEventListener("click", () => {
-        console.log("box was clicked");
-        if (turnO) { //playerO
-          box.innerText = "O";
-           turnO = false;
-        } else { //playerX
-          box.innerText = "X";
-          turnO = true;
-        }
-        box.disabled = true;
-        count++;
+  statusText.textContent = `Player ${currentPlayer}'s Turn`;
+}
 
-        let isWinner = checkWinner();
+function handleMove(index) {
+  if (!gameActive || cells[index].textContent !== "") return;
 
-        if(count=== 9 && !isWinner) {
-            gameDraw();
-        }
-     });
-});
+  cells[index].textContent = currentPlayer;
 
-const gameDraw = () => {
-    msg.innerText = 'Game was a Draw.';
-    msgContainer.classList.remove("hide");
-    disableBoxes();
-};
+  if (checkWin()) return;
 
-const disableBoxes = () => {
-    for(let box of boxes) {
-        box.disabled = true;
-        
+  currentPlayer = currentPlayer === "X" ? "O" : "X";
+  statusText.textContent = `Player ${currentPlayer}'s Turn`;
+
+  if (mode === "ai" && currentPlayer === "O") {
+    setTimeout(aiMove, 500);
+  }
+}
+
+function aiMove() {
+  let empty = cells.map((c, i) => c.textContent === "" ? i : null).filter(v => v !== null);
+  let move = empty[Math.floor(Math.random() * empty.length)];
+  handleMove(move);
+}
+
+function checkWin() {
+  for (let pattern of winPatterns) {
+    const [a, b, c] = pattern;
+    if (
+      cells[a].textContent &&
+      cells[a].textContent === cells[b].textContent &&
+      cells[a].textContent === cells[c].textContent
+    ) {
+      cells[a].classList.add("win");
+      cells[b].classList.add("win");
+      cells[c].classList.add("win");
+
+      statusText.textContent = `🎉 Player ${currentPlayer} Wins!`;
+      gameActive = false;
+      return true;
     }
-};
+  }
 
-const enableBoxes = () => {
-    for (let box of boxes) {
-        box.disabled = false;
-        box.innerText = "";
-    }
-};
+  if (cells.every(cell => cell.textContent !== "")) {
+    statusText.textContent = "It's a Draw!";
+    gameActive = false;
+    return true;
+  }
 
-const showWinner = (winner) => {
-    msg.innerText = `Congratulations, Winner is ${winner}`;
-    msgContainer.classList.remove("hide");
-    disableBoxes();
-};
+  return false;
+}
 
-const checkWinner = () => {
-    for(let pattern of winPatterns) {
-        let pos1val = boxes[pattern[0]].innerText;
-        let pos2val = boxes[pattern[1]].innerText;
-        let pos3val = boxes[pattern[2]].innerText;
-        
-        if(pos1val != "" && pos2val !="" && pos3val !="") {
-            if(pos1val ===pos2val && pos2val === pos3val) {
-                showWinner(pos1val);
-                return true;
-            }
-        }
-    }
-};
+function restartGame() {
+  currentPlayer = "X";
+  gameActive = true;
+  createBoard();
+}
 
-newGameBtn.addEventListener("click", resetGame);
-resetBtn.addEventListener("click", resetGame);
+function setMode(selectedMode) {
+  mode = selectedMode;
+  restartGame();
+}
+
+createBoard();
